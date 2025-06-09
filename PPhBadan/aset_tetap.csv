@@ -1,0 +1,6 @@
+aset_id,kategori,nilai_perolehan,umur_ekonomis,metode
+A001,Mesin,500000000,10,Garis Lurus
+A002,Kendaraan,300000000,5,Garis Lurus
+A003,Bangunan,1000000000,20,Saldo Menurun
+A004,Peralatan,200000000,8,Garis Lurus
+A005,Mesin,750000000,12,Saldo Menurun
