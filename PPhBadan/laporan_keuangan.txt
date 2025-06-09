@@ -1,0 +1,55 @@
+WITH LaporanKeuangan AS (
+  SELECT 
+    t.tahun,
+    t.pendapatan,
+    t.beban_operasional,
+    t.penyusutan,
+    t.skenario,
+    (t.pendapatan - t.beban_operasional - t.penyusutan) AS laba_sebelum_pajak,
+    k.tax_rate,
+    CASE 
+      WHEN t.skenario = 'Tax Holiday' 
+        AND CAST(t.tahun AS STRING) BETWEEN 
+          CAST(EXTRACT(YEAR FROM k.tax_holiday_awal) AS STRING) 
+          AND CAST(EXTRACT(YEAR FROM k.tax_holiday_akhir) AS STRING)
+        THEN 0.0
+      ELSE k.tax_rate
+    END AS effective_tax_rate,
+    CASE 
+      WHEN t.skenario = 'Tax Holiday' 
+        AND CAST(t.tahun AS STRING) BETWEEN 
+          CAST(EXTRACT(YEAR FROM k.tax_holiday_awal) AS STRING) 
+          AND CAST(EXTRACT(YEAR FROM k.tax_holiday_akhir) AS STRING)
+        THEN 0.0
+      ELSE (t.pendapatan - t.beban_operasional - t.penyusutan) * k.tax_rate
+    END AS pajak_penghasilan,
+    (t.pendapatan - t.beban_operasional - t.penyusutan) * 
+    (1 - CASE 
+           WHEN t.skenario = 'Tax Holiday' 
+             AND CAST(t.tahun AS STRING) BETWEEN 
+               CAST(EXTRACT(YEAR FROM k.tax_holiday_awal) AS STRING) 
+               AND CAST(EXTRACT(YEAR FROM k.tax_holiday_akhir) AS STRING)
+             THEN 0.0
+           ELSE k.tax_rate
+         END) AS laba_bersih
+  FROM 
+    `transaksi_keuangan` t
+  JOIN 
+    `kebijakan_fiskal` k
+  ON 
+    t.tahun = k.tahun
+)
+SELECT 
+  tahun,
+  skenario,
+  pendapatan,
+  beban_operasional,
+  penyusutan,
+  laba_sebelum_pajak,
+  effective_tax_rate,
+  pajak_penghasilan,
+  laba_bersih
+FROM 
+  LaporanKeuangan
+ORDER BY 
+  tahun, skenario;
